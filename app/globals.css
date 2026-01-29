@@ -15,6 +15,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
+    /* Note: Ye global text ko white kar raha hai, isliye hum editor ko neeche override karenge */
     --foreground: #ededed;
   }
 }
@@ -23,4 +24,84 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* =========================================
+   1. ANIMATIONS (Lava & Others)
+   ========================================= */
+@layer utilities {
+  @keyframes lava-gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .animate-lava {
+    /* Hot Red & Dark Theme Gradient */
+    background: linear-gradient(-45deg, #000000, #3f0000, #7f1d1d, #000000);
+    background-size: 400% 400%;
+    animation: lava-gradient 10s ease infinite;
+  }
+
+  /* Smooth Fade In Animation */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 40px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out both;
+  }
+}
+
+/* =========================================
+   2. REACT QUILL EDITOR CUSTOMIZATION
+   (Ise zaroor rakhein taaki Editor sundar dikhe)
+   ========================================= */
+
+/* Toolbar (Header) */
+.ql-toolbar.ql-snow {
+    border: 1px solid #e5e7eb !important; /* Gray border */
+    border-top-left-radius: 0.75rem;      /* Rounded Corners */
+    border-top-right-radius: 0.75rem;
+    background-color: #f9fafb;            /* Light Gray BG */
+    font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+/* Content Container (Body) */
+.ql-container.ql-snow {
+    border: 1px solid #e5e7eb !important;
+    border-top: none !important;
+    border-bottom-left-radius: 0.75rem;
+    border-bottom-right-radius: 0.75rem;
+    background-color: #ffffff !important; /* Always White BG */
+    font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+/* The Typing Area (Text Fix) */
+.ql-editor {
+    color: #111827 !important; /* ✅ FORCE BLACK TEXT (Override Dark Mode) */
+    font-size: 1.125rem;       /* Large readable text */
+    line-height: 1.75;
+    min-height: 300px;
+    padding: 1.5rem !important;
+}
+
+/* Placeholder Color */
+.ql-editor.ql-blank::before {
+    color: #9ca3af !important; /* Gray Placeholder */
+    font-style: italic;
+    left: 1.5rem !important;
 }

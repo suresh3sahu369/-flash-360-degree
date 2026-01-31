@@ -8,11 +8,18 @@ import BreakingNews from '@/components/BreakingNews';
 import NewsGrid from '@/components/NewsGrid';
 import Footer from '@/components/Footer';
 
+// 🔥 ZAROORI FIX: Isse Vercel build ke waqt environment variables ko sahi se uthayega
+export const dynamic = 'force-dynamic';
+
 // --- DATA FETCHING ---
 async function getNews() {
   try {
-    // ✅ FIX: Hardcoded localhost hata kar Environment Variable use kiya
+    // ✅ FIX: Environment Variable use kiya
     const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+    
+    // Debugging ke liye console log (Sirf Vercel logs mein dikhega)
+    console.log("Fetching from URL:", `${baseUrl}/news`);
+
     const res = await fetch(`${baseUrl}/news`, { cache: 'no-store' });
     
     if (!res.ok) throw new Error('Failed to fetch data');
@@ -30,12 +37,11 @@ export default async function Home() {
   const heroNews = newsList.length > 0 ? newsList[0] : null;
   const moreNews = newsList.length > 1 ? newsList.slice(1) : [];
 
-  // ✅ FIX: Images ko live backend se fetch karne ke liye function update kiya
+  // ✅ FIX: Images ko live backend domain se fetch karega
   const getImageUrl = (imagePath: string) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
     
-    // InfinityFree domain se images uthayega
     const backendUrl = "http://flash-360-degree.ct.ws"; 
     return `${backendUrl}/storage/${imagePath}`;
   };

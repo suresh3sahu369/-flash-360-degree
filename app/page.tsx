@@ -8,22 +8,32 @@ import BreakingNews from '@/components/BreakingNews';
 import NewsGrid from '@/components/NewsGrid';
 import Footer from '@/components/Footer';
 
-// 🔥 ZAROORI FIX: Isse Vercel build ke waqt environment variables ko sahi se uthayega
+// 🔥 ZAROORI: Isse Vercel runtime par fresh data uthayega
 export const dynamic = 'force-dynamic';
 
 // --- DATA FETCHING ---
 async function getNews() {
   try {
-    // ✅ FIX: Environment Variable use kiya
     const baseUrl = process.env.NEXT_PUBLIC_API_URL;
-    
-    // Debugging ke liye console log (Sirf Vercel logs mein dikhega)
-    console.log("Fetching from URL:", `${baseUrl}/news`);
+    if (!baseUrl) return [];
 
-    const res = await fetch(`${baseUrl}/news`, { cache: 'no-store' });
+    // ✅ FIX: Added Accept header for InfinityFree compatibility
+    const res = await fetch(`${baseUrl}/news`, { 
+      cache: 'no-store',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      }
+    });
     
-    if (!res.ok) throw new Error('Failed to fetch data');
-    return res.json();
+    // ✅ FIX: Server side crash se bachne ke liye JSON check
+    const contentType = res.headers.get("content-type");
+    if (!res.ok || !contentType || !contentType.includes("application/json")) {
+      console.error("Backend sent invalid response (Non-JSON)");
+      return [];
+    }
+
+    return await res.json();
   } catch (error) {
     console.error("Backend Connection Error:", error);
     return [];
@@ -32,16 +42,18 @@ async function getNews() {
 
 export default async function Home() {
   const apiData = await getNews();
-  const newsList = apiData.data ? apiData.data : (Array.isArray(apiData) ? apiData : []);
+  
+  // Data extraction logic
+  const newsList = apiData && apiData.data ? apiData.data : (Array.isArray(apiData) ? apiData : []);
 
   const heroNews = newsList.length > 0 ? newsList[0] : null;
   const moreNews = newsList.length > 1 ? newsList.slice(1) : [];
 
-  // ✅ FIX: Images ko live backend domain se fetch karega
   const getImageUrl = (imagePath: string) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
     
+    // InfinityFree domain path
     const backendUrl = "http://flash-360-degree.ct.ws"; 
     return `${backendUrl}/storage/${imagePath}`;
   };
@@ -105,15 +117,13 @@ export default async function Home() {
         )}
 
         {/* --- GRID SECTION --- */}
-        {moreNews.length > 0 && (
-             <NewsGrid news={moreNews} />
-        )}
+        {moreNews.length > 0 && <NewsGrid news={moreNews} />}
 
         {/* Empty State */}
         {newsList.length === 0 && (
             <div className="text-center py-20 bg-gray-50 rounded border-dashed border-2 border-gray-200">
                 <h3 className="text-2xl font-bold text-gray-400">No News Found</h3>
-                <p className="text-gray-500 mt-2">Go to Admin Panel or Dashboard to create news.</p>
+                <p className="text-gray-500 mt-2">Check backend API connection or add news from dashboard.</p>
             </div>
         )}
 

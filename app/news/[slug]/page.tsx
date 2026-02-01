@@ -35,11 +35,14 @@ export default function NewsDetail() {
     const loadAllData = async () => {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const headers: any = token ? { Authorization: `Bearer ${token}` } : {};
+      // ✅ FIX: Dashboard variable use kiya localhost hatakar
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      const headers: any = { 'Accept': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
 
       try {
         // A. Main News Details
-        const newsRes = await fetch(`http://127.0.0.1:8000/api/news-details/${slug}`, { headers });
+        const newsRes = await fetch(`${baseUrl}/news-details/${slug}`, { headers });
         if (!newsRes.ok) throw new Error('News not found');
         const newsData = await newsRes.json();
         
@@ -52,27 +55,28 @@ export default function NewsDetail() {
         setSubscriberCount(newsData.subscribers_count || 0);
 
         // B. Comments Load
-        const commentsRes = await fetch(`http://127.0.0.1:8000/api/news/${newsData.news.id}/comments`);
+        const commentsRes = await fetch(`${baseUrl}/news/${newsData.news.id}/comments`, { headers });
         const commentsData = await commentsRes.json();
         setComments(commentsData);
 
         // C. Check Saved Status
         if (token) {
-            const bookmarksRes = await fetch('http://127.0.0.1:8000/api/bookmarks', { headers });
+            const bookmarksRes = await fetch(`${baseUrl}/bookmarks`, { headers });
             if (bookmarksRes.ok) {
                 const bookmarks = await bookmarksRes.json();
-                const found = bookmarks.find((b: any) => b.id === newsData.news.id);
+                const bookmarkList = Array.isArray(bookmarks) ? bookmarks : (bookmarks.data || []);
+                const found = bookmarkList.find((b: any) => b.id === newsData.news.id);
                 if (found) setIsSaved(true);
             }
         }
 
         // D. Related News
-        const allNewsRes = await fetch('http://127.0.0.1:8000/api/news');
+        const allNewsRes = await fetch(`${baseUrl}/news`, { headers });
         const allNewsData = await allNewsRes.json();
         const allNews = allNewsData.data || allNewsData;
-        const related = allNews
+        const related = Array.isArray(allNews) ? allNews
             .filter((item: any) => item.category_id === newsData.news.category_id && item.id !== newsData.news.id)
-            .slice(0, 3);
+            .slice(0, 3) : [];
         setRelatedNews(related);
 
       } catch (error) {
@@ -87,7 +91,6 @@ export default function NewsDetail() {
 
   // --- 2. HANDLERS ---
 
-  // 👇 UPDATED SUBSCRIBE HANDLER (Asli Error Dikhayega)
   const handleSubscribe = async () => {
     const token = localStorage.getItem('token');
     if (!token) return alert('Please login to Subscribe!');
@@ -96,19 +99,19 @@ export default function NewsDetail() {
         return alert('Cannot subscribe: Author info missing.');
     }
 
-    // Save previous state (Error aane par wapas lane ke liye)
     const previousState = isSubscribed;
     const previousCount = subscriberCount;
 
-    // Optimistic Update
     setIsSubscribed(!isSubscribed);
     setSubscriberCount(prev => isSubscribed ? prev - 1 : prev + 1);
 
     try {
-        const res = await fetch(`http://127.0.0.1:8000/api/author/${news.user.id}/subscribe`, {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+        const res = await fetch(`${baseUrl}/author/${news.user.id}/subscribe`, {
             method: 'POST',
             headers: { 
                 'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json',
                 'Content-Type': 'application/json' 
             }
         });
@@ -116,16 +119,12 @@ export default function NewsDetail() {
         const data = await res.json();
 
         if (!res.ok) {
-            // Agar Backend ne error bheja (e.g. "You cannot subscribe yourself")
             throw new Error(data.message || 'Subscription failed');
         }
 
     } catch (err: any) {
-        // Revert State
         setIsSubscribed(previousState);
         setSubscriberCount(previousCount);
-        
-        // Asli Error Alert karo
         alert(err.message);
     }
   };
@@ -138,12 +137,17 @@ export default function NewsDetail() {
     setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
 
     try {
-      await fetch(`http://127.0.0.1:8000/api/news/${news.id}/like`, {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      await fetch(`${baseUrl}/news/${news.id}/like`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+        }
       });
     } catch (err) {
       setIsLiked(!isLiked);
+      setLikeCount(prev => isLiked ? prev + 1 : prev - 1);
     }
   };
 
@@ -155,10 +159,12 @@ export default function NewsDetail() {
     setIsSaved(!isSaved);
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/bookmark/toggle', {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${baseUrl}/bookmark/toggle`, {
         method: 'POST',
         headers: { 
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ news_id: news.id })
@@ -198,11 +204,13 @@ export default function NewsDetail() {
 
     setCommentLoading(true);
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/news/${news.id}/comment`, {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${baseUrl}/news/${news.id}/comment`, {
         method: 'POST',
         headers: { 
             'Content-Type': 'application/json', 
-            Authorization: `Bearer ${token}` 
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}` 
         },
         body: JSON.stringify({ content: newComment })
       });
@@ -216,7 +224,8 @@ export default function NewsDetail() {
     }
   };
 
-  const getImageUrl = (path: string) => path?.startsWith('http') ? path : `http://127.0.0.1:8000/storage/${path}`;
+  // ✅ FIX: Images ko live backend domain se fetch karega
+  const getImageUrl = (path: string) => path?.startsWith('http') ? path : `http://flash-360-degree.ct.ws/storage/${path}`;
 
   if (loading) return <div className="min-h-screen flex justify-center items-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-red-700"></div></div>;
   if (!news) return <div className="text-center py-20">News Not Found</div>;
@@ -360,7 +369,7 @@ export default function NewsDetail() {
                                     <span className="text-xs text-gray-500">{new Date(comment.created_at).toLocaleDateString()}</span>
                                 </div>
                                 <p className="text-gray-800 mt-1 text-sm">{comment.content}</p>
-                                <div className="flex gap-4 mt-2 text-xs font-bold text-gray-500 cursor-pointer">
+                                <div className="flex gap-4 mt-2 text-xs font-bold text-gray-500 cursor-pointer text-black">
                                     <span className="hover:text-black">Like</span>
                                     <span className="hover:text-black">Reply</span>
                                 </div>

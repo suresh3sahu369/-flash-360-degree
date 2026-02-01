@@ -8,6 +8,7 @@ export default function EditProfile() {
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
 
+  // Profile data load karo local storage se
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -26,11 +27,14 @@ export default function EditProfile() {
     const token = localStorage.getItem('token');
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/update-profile', {
+      // ✅ FIX: Dashboard variable use kiya localhost hatakar
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
+      const res = await fetch(`${baseUrl}/update-profile`, {
         method: 'PUT',
         headers: { 
             'Content-Type': 'application/json',
-            'Accept': 'application/json', // 👈 YE LINE ERROR ROKEGI (CORS Fix)
+            'Accept': 'application/json', // InfinityFree compatibility
             'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(formData),
@@ -48,7 +52,7 @@ export default function EditProfile() {
       window.location.reload(); 
 
     } catch (err: any) {
-      console.error(err);
+      console.error("Profile Update Error:", err);
       alert(err.message || 'Failed to update');
     } finally {
       setLoading(false);
@@ -65,7 +69,7 @@ export default function EditProfile() {
         Edit Your Profile
       </h2>
       
-      <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+      <form onSubmit={handleSubmit} className="space-y-6 relative z-10 text-black">
         
         {/* FULL NAME INPUT */}
         <div className="group">

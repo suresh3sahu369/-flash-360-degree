@@ -17,20 +17,37 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (!storedUser) {
+      // ✅ Agar user login nahi hai toh login page par bhejo
       router.push('/auth/login');
     } else {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        // Agar JSON parse fail ho toh logout kardo
+        handleLogout();
+      }
     }
   }, [router]);
 
   const handleLogout = () => {
+    // ✅ Clear all auth data
     localStorage.removeItem('token');
+    localStorage.removeItem('auth_token'); // Extra safety
     localStorage.removeItem('user');
+    
+    // ✅ Redirect to home and refresh to clear state
     router.push('/');
-    window.location.reload();
+    setTimeout(() => {
+        window.location.reload();
+    }, 100);
   };
 
-  if (!user) return null; // Jab tak check ho raha hai, kuch mat dikhao
+  // Jab tak user check ho raha hai, blank screen ya loader dikhao
+  if (!user) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-red-700"></div>
+    </div>
+  );
 
   // Menu Items Array
   const menuItems = [
@@ -41,7 +58,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-gray-50 font-serif">
-      {/* Website Navigation (Taaki user wapas ja sake) */}
       <TopBar />
       <Header />
       <Navbar />
@@ -51,15 +67,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           
           {/* --- LEFT SIDEBAR --- */}
           <aside className="md:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden sticky top-24">
               
               {/* User Info Card */}
               <div className="p-6 bg-black text-white text-center">
                 <div className="w-16 h-16 bg-gradient-to-tr from-blue-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl font-bold border-2 border-white">
-                    {user.name.charAt(0).toUpperCase()}
+                    {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                 </div>
-                <h3 className="font-bold text-lg truncate">{user.name}</h3>
-                <p className="text-gray-400 text-xs">{user.email}</p>
+                <h3 className="font-bold text-lg truncate">{user.name || 'User'}</h3>
+                <p className="text-gray-400 text-xs truncate">{user.email}</p>
               </div>
 
               {/* Menu Links */}
@@ -79,7 +95,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   </Link>
                 ))}
 
-                {/* 🔥 NEW: WRITE NEWS BUTTON (Added Here) */}
+                {/* WRITE NEWS BUTTON */}
                 <Link 
                     href="/dashboard/create-news" 
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-bold group mt-4 border border-gray-100 ${
@@ -91,7 +107,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <div className={`p-1.5 rounded-md transition-colors ${
                         pathname === '/dashboard/create-news' ? 'bg-red-200 text-red-800' : 'bg-gray-100 group-hover:bg-red-100 group-hover:text-red-700'
                     }`}>
-                        {/* Pen Icon */}
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                     </div>
                     <span>Write News</span>

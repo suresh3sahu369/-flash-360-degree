@@ -7,20 +7,29 @@ export default function DashboardOverview() {
   const [stats, setStats] = useState({ saved_stories: 0, comments: 0, status: 'Loading...', recent_activity: [] });
   const [loading, setLoading] = useState(true);
 
-  // Helper for Image URL
+  // ✅ FIX: Images ko live backend domain se fetch karega
   const getImageUrl = (imagePath: string) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
-    return `http://127.0.0.1:8000/storage/${imagePath}`;
+    
+    const backendUrl = "http://flash-360-degree.ct.ws"; 
+    return `${backendUrl}/storage/${imagePath}`;
   };
 
   useEffect(() => {
     const fetchStats = async () => {
       const token = localStorage.getItem('token');
       try {
-        const res = await fetch('http://127.0.0.1:8000/api/dashboard-stats', {
-          headers: { Authorization: `Bearer ${token}` }
+        // ✅ FIX: Dashboard variable use kiya localhost hatakar
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+        
+        const res = await fetch(`${baseUrl}/dashboard-stats`, {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json' // InfinityFree compatibility
+          }
         });
+        
         if (res.ok) {
           const data = await res.json();
           setStats(data);
@@ -71,7 +80,7 @@ export default function DashboardOverview() {
         </div>
       </div>
 
-      {/* 👇 RECENT ACTIVITY SECTION (Updated) */}
+      {/* RECENT ACTIVITY SECTION */}
       <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
         <h3 className="text-xl font-bold text-gray-900 mb-6 border-b pb-2">Recent Saved Stories</h3>
         
@@ -85,7 +94,7 @@ export default function DashboardOverview() {
                         </div>
                         {/* Content */}
                         <div className="flex-1">
-                             <span className="text-[10px] font-bold text-red-700 uppercase">{item.category_name || 'News'}</span>
+                             <span className="text-[10px] font-bold text-red-700 uppercase">{item.category?.name || 'News'}</span>
                              <Link href={`/news/${item.slug}`}>
                                 <h4 className="text-sm font-bold text-gray-900 hover:text-red-700 leading-tight line-clamp-2">
                                     {item.title}
@@ -100,20 +109,20 @@ export default function DashboardOverview() {
                     </div>
                 ))}
                 
-                <div className="pt-4 text-center">
+                <div className="pt-4 text-center text-black">
                     <Link href="/dashboard/saved" className="text-sm font-bold text-gray-500 hover:text-black hover:underline">
                         View All Saved Stories &rarr;
                     </Link>
                 </div>
             </div>
         ) : (
-            // Empty State (Agar koi activity nahi hai)
+            /* Empty State */
             <div className="text-center py-10">
                 <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
                     <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </div>
                 <h4 className="text-gray-900 font-bold">No Recent Activity</h4>
-                <p className="text-gray-500 text-sm mb-4">Go read some news and save them!</p>
+                <p className="text-gray-500 text-sm mb-4 text-black">Go read some news and save them!</p>
                 <Link href="/" className="text-red-700 font-bold hover:underline">Start Reading &rarr;</Link>
             </div>
         )}

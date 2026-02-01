@@ -6,15 +6,28 @@ export default function AdminComments() {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // ✅ FIX: Dashboard variable use kiya localhost hatakar
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
   // Comments Fetch Karo
   const fetchComments = async () => {
-    const token = localStorage.getItem('token');
-    const res = await fetch('http://127.0.0.1:8000/api/admin/comments', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const data = await res.json();
-    setComments(data);
-    setLoading(false);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${baseUrl}/admin/comments`, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json' // InfinityFree compatibility
+        }
+      });
+      
+      const data = await res.json();
+      // Check if data is array
+      setComments(Array.isArray(data) ? data : (data.data || []));
+    } catch (error) {
+      console.error("Fetch Error:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -25,18 +38,26 @@ export default function AdminComments() {
   const handleDelete = async (id: number) => {
     if(!confirm('Are you sure you want to delete this comment?')) return;
 
-    const token = localStorage.getItem('token');
-    await fetch(`http://127.0.0.1:8000/api/admin/comments/${id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    
-    // List se hatao
-    setComments(comments.filter((c: any) => c.id !== id));
-    alert('Comment Deleted!');
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${baseUrl}/admin/comments/${id}`, {
+        method: 'DELETE',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (res.ok) {
+        setComments(comments.filter((c: any) => c.id !== id));
+        alert('Comment Deleted!');
+      }
+    } catch (error) {
+      console.error("Delete Error:", error);
+    }
   };
 
-  if (loading) return <div className="p-10">Loading Comments...</div>;
+  if (loading) return <div className="p-10 font-bold text-gray-500 animate-pulse">Loading Comments...</div>;
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">

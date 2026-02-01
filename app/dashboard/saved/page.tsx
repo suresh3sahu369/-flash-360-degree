@@ -7,22 +7,32 @@ export default function SavedStories() {
   const [news, setNews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // ✅ FIX: Images ko live backend domain se fetch karega
   const getImageUrl = (imagePath: string) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
-    return `http://127.0.0.1:8000/storage/${imagePath}`;
+    
+    const backendUrl = "http://flash-360-degree.ct.ws"; 
+    return `${backendUrl}/storage/${imagePath}`;
   };
 
   useEffect(() => {
     const fetchBookmarks = async () => {
       const token = localStorage.getItem('token');
       try {
-        const res = await fetch('http://127.0.0.1:8000/api/bookmarks', {
-          headers: { Authorization: `Bearer ${token}` }
+        // ✅ FIX: Dashboard variable use kiya localhost hatakar
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+        
+        const res = await fetch(`${baseUrl}/bookmarks`, {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json' // InfinityFree compatibility
+          }
         });
+        
         if (res.ok) {
           const data = await res.json();
-          setNews(data);
+          setNews(Array.isArray(data) ? data : (data.data || []));
         }
       } catch (error) {
         console.error("Failed to load bookmarks", error);
@@ -45,7 +55,7 @@ export default function SavedStories() {
   return (
     <div className="space-y-8 animate-fade-in-up">
       
-      {/* 👇 1. ANIMATED BACK BUTTON (Top Left) */}
+      {/* 1. ANIMATED BACK BUTTON */}
       <div>
           <Link 
             href="/" 
@@ -60,12 +70,11 @@ export default function SavedStories() {
 
       {/* Header Section */}
       <div className="bg-gradient-to-r from-white to-gray-50 p-8 rounded-2xl shadow-sm border border-gray-200 flex flex-col md:flex-row justify-between items-center relative overflow-hidden">
-        {/* Decorative Circle */}
         <div className="absolute top-0 right-0 w-24 h-24 bg-red-50 rounded-full -mr-8 -mt-8 opacity-50"></div>
         
         <div className="relative z-10">
             <h1 className="text-3xl font-extrabold text-gray-900 mb-1">Saved Stories</h1>
-            <p className="text-gray-500 font-medium">Your personal collection of news.</p>
+            <p className="text-gray-500 font-medium text-black">Your personal collection of news.</p>
         </div>
         <div className="mt-4 md:mt-0 relative z-10">
             <span className="bg-black text-white px-5 py-2 rounded-full text-sm font-bold shadow-lg">
@@ -80,7 +89,6 @@ export default function SavedStories() {
             {news.map((item) => (
                 <div key={item.id} className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group cursor-pointer">
                     <div className="flex h-36">
-                        {/* Image Side */}
                         <div className="w-2/5 bg-gray-100 relative overflow-hidden">
                              {item.image ? (
                                 <img 
@@ -94,11 +102,10 @@ export default function SavedStories() {
                              <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity"></div>
                         </div>
                         
-                        {/* Text Side */}
                         <div className="w-3/5 p-5 flex flex-col justify-between">
                             <div>
                                 <span className="inline-block px-2 py-1 bg-red-50 text-red-700 text-[10px] font-bold uppercase tracking-wider rounded mb-2">
-                                    {item.category_name || 'News'}
+                                    {item.category?.name || 'News'}
                                 </span>
                                 <Link href={`/news/${item.slug}`}>
                                     <h3 className="font-bold text-gray-900 leading-snug line-clamp-2 group-hover:text-red-700 transition-colors">
@@ -118,7 +125,7 @@ export default function SavedStories() {
             ))}
         </div>
       ) : (
-        // 👇 2. EMPTY STATE WITH ANIMATED BUTTON
+        /* 2. EMPTY STATE */
         <div className="bg-white p-16 rounded-2xl border-2 border-dashed border-gray-200 text-center hover:border-red-200 transition-colors">
             <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
                 <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
@@ -135,7 +142,6 @@ export default function SavedStories() {
             </Link>
         </div>
       )}
-
     </div>
   );
 }

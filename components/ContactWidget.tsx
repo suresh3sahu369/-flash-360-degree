@@ -6,7 +6,7 @@ export default function ContactWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // 👇 Aapka diya hua poora data structure
+  // 👇 Form state structure
   const [formData, setFormData] = useState({ 
     name: '', 
     email: '', 
@@ -25,10 +25,15 @@ export default function ContactWidget() {
     setLoading(true);
 
     try {
-      // Backend par data bhej rahe hain
-      const res = await fetch('http://127.0.0.1:8000/api/contact', {
+      // ✅ FIX: Dashboard variable use kiya localhost hatakar
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      
+      const res = await fetch(`${baseUrl}/contact`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        headers: { 
+            'Content-Type': 'application/json', 
+            'Accept': 'application/json' // InfinityFree compatibility
+        },
         body: JSON.stringify(formData),
       });
 
@@ -40,6 +45,7 @@ export default function ContactWidget() {
         alert('Failed to send. Please try again.');
       }
     } catch (error) {
+      console.error("Widget Error:", error);
       alert('Server Connection Error!');
     } finally {
       setLoading(false);
@@ -51,7 +57,7 @@ export default function ContactWidget() {
       
       {/* POPUP FORM */}
       {isOpen && (
-        <div className="mb-4 w-[380px] bg-[#0a0a0a] border border-gray-800 rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300">
+        <div className="mb-4 w-[320px] md:w-[380px] bg-[#0a0a0a] border border-gray-800 rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300">
           
           {/* Header */}
           <div className="bg-gradient-to-r from-red-700 to-red-900 p-4 flex justify-between items-center">
@@ -60,24 +66,20 @@ export default function ContactWidget() {
           </div>
 
           {/* Form Body (Scrollable) */}
-          <form onSubmit={handleSubmit} className="p-5 space-y-3 max-h-[450px] overflow-y-auto custom-scrollbar">
+          <form onSubmit={handleSubmit} className="p-5 space-y-3 max-h-[400px] md:max-h-[450px] overflow-y-auto custom-scrollbar">
             
-            {/* Name */}
             <input type="text" name="name" required placeholder="Full Name" 
                 className="w-full bg-[#1a1a1a] border border-gray-700 text-white p-3 rounded focus:border-red-500 outline-none placeholder-gray-500"
                 value={formData.name} onChange={handleChange} />
 
-            {/* Email */}
             <input type="email" name="email" required placeholder="Email Address"
                 className="w-full bg-[#1a1a1a] border border-gray-700 text-white p-3 rounded focus:border-red-500 outline-none placeholder-gray-500"
                 value={formData.email} onChange={handleChange} />
 
-            {/* Mobile (New) */}
             <input type="tel" name="mobile" required placeholder="Mobile Number"
                 className="w-full bg-[#1a1a1a] border border-gray-700 text-white p-3 rounded focus:border-red-500 outline-none placeholder-gray-500"
                 value={formData.mobile} onChange={handleChange} />
 
-            {/* City & State (New - Side by Side) */}
             <div className="flex gap-2">
                 <input type="text" name="city" required placeholder="City"
                     className="w-1/2 bg-[#1a1a1a] border border-gray-700 text-white p-3 rounded focus:border-red-500 outline-none placeholder-gray-500"
@@ -88,12 +90,10 @@ export default function ContactWidget() {
                     value={formData.state} onChange={handleChange} />
             </div>
 
-            {/* Message */}
             <textarea name="message" required rows={3} placeholder="Your Message..."
                 className="w-full bg-[#1a1a1a] border border-gray-700 text-white p-3 rounded focus:border-red-500 outline-none resize-none placeholder-gray-500"
                 value={formData.message} onChange={handleChange} ></textarea>
 
-            {/* Submit Button */}
             <button type="submit" disabled={loading}
                 className="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-3 rounded uppercase tracking-wider transition-all duration-300 shadow-lg transform active:scale-95">
                 {loading ? 'Sending...' : 'Send Message'}

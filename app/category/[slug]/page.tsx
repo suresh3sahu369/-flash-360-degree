@@ -9,7 +9,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
 export default function CategoryPage() {
-  const { slug } = useParams(); // URL se category ka naam nikalega (e.g., 'tech')
+  const { slug } = useParams(); 
   const [newsList, setNewsList] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -17,12 +17,19 @@ export default function CategoryPage() {
     const fetchNews = async () => {
       setLoading(true);
       try {
-        // 👇 Backend ko bol rahe hain: Sirf is category ki news do
-        const res = await fetch(`http://127.0.0.1:8000/api/news?category=${slug}`);
+        // ✅ FIX: Localhost hataya aur dashboard wala variable use kiya
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+        const res = await fetch(`${baseUrl}/news?category=${slug}`, {
+           cache: 'no-store',
+           headers: {
+             'Accept': 'application/json' // InfinityFree compatibility ke liye
+           }
+        });
+        
         const data = await res.json();
         setNewsList(data.data || data);
       } catch (error) {
-        console.error(error);
+        console.error("Category Fetch Error:", error);
       } finally {
         setLoading(false);
       }
@@ -31,7 +38,9 @@ export default function CategoryPage() {
     if (slug) fetchNews();
   }, [slug]);
 
-  const getImageUrl = (path: string) => path?.startsWith('http') ? path : `http://127.0.0.1:8000/storage/${path}`;
+  // ✅ FIX: Images ab seedha aapke live backend domain se aayengi
+  const getImageUrl = (path: string) => 
+    path?.startsWith('http') ? path : `http://flash-360-degree.ct.ws/storage/${path}`;
 
   return (
     <div className="bg-white min-h-screen font-sans text-gray-900">

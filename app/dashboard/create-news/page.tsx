@@ -10,7 +10,7 @@ export default function CreateNewsDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   
-  // 👇 State for Multiple Image Previews
+  // State for Multiple Image Previews
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
   // Form Data
@@ -19,7 +19,7 @@ export default function CreateNewsDashboard() {
     slug: '',
     category_id: '',
     content: '',
-    images: [] as File[], // 👈 CHANGED: Ab ye Array of Files hai
+    images: [] as File[], 
     is_breaking: false,
     status: 'draft'
   });
@@ -42,14 +42,12 @@ export default function CreateNewsDashboard() {
     { id: 6, name: 'Education' }
   ];
 
-  // 👇 CHANGED: Handle Multiple Files
+  // Handle Multiple Files
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      // FileList ko Array mein convert kiya
       const filesArray = Array.from(e.target.files);
       setFormData({ ...formData, images: filesArray });
       
-      // Sabhi images ka preview generate kiya
       const newPreviews = filesArray.map(file => URL.createObjectURL(file));
       setImagePreviews(newPreviews);
     }
@@ -59,7 +57,6 @@ export default function CreateNewsDashboard() {
     e.preventDefault();
     setLoading(true);
 
-    // 1. TOKEN NIKALO
     const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
 
     if (!token) {
@@ -74,13 +71,11 @@ export default function CreateNewsDashboard() {
     data.append('slug', formData.slug);
     data.append('category_id', formData.category_id);
     data.append('content', formData.content);
-    
     data.append('author_name', 'Frontend User'); 
     data.append('is_breaking', formData.is_breaking ? '1' : '0');
     data.append('status', formData.status);
     
-    // 👇 CHANGED: Loop through all images and append them
-    // Backend expects 'images[]'
+    // Append images
     if (formData.images.length > 0) {
         formData.images.forEach((file) => {
             data.append('images[]', file);
@@ -88,11 +83,15 @@ export default function CreateNewsDashboard() {
     }
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/news/store', {
+      // ✅ FIX: Dashboard variable use kiya localhost hatakar
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
+      const res = await fetch(`${baseUrl}/news/store`, {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
             'Authorization': `Bearer ${token}`, 
+            // 'Content-Type': 'multipart/form-data' khud Next.js set kar lega FormData ke liye
         },
         body: data,
       });
@@ -121,15 +120,11 @@ export default function CreateNewsDashboard() {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-      
-      {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Create News</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        
-        {/* --- ROW 1: TITLE & SLUG --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Title <span className="text-red-500">*</span></label>
@@ -137,7 +132,7 @@ export default function CreateNewsDashboard() {
                   type="text" required
                   value={formData.title}
                   onChange={(e) => setFormData({...formData, title: e.target.value})}
-                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all text-black bg-white"
+                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-orange-500 outline-none text-black bg-white"
                   placeholder="Enter title"
                 />
             </div>
@@ -154,7 +149,6 @@ export default function CreateNewsDashboard() {
             </div>
         </div>
 
-        {/* --- ROW 2: CATEGORY & IMAGE --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Category <span className="text-red-500">*</span></label>
@@ -162,26 +156,23 @@ export default function CreateNewsDashboard() {
                     required
                     value={formData.category_id}
                     onChange={(e) => setFormData({...formData, category_id: e.target.value})}
-                    className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none bg-white text-black"
+                    className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-1 focus:ring-orange-500 outline-none bg-white text-black"
                 >
                     <option value="">Select an option</option>
                     {categories.map(cat => <option key={cat.id} value={cat.id} className="text-black">{cat.name}</option>)}
                 </select>
             </div>
 
-            {/* 👇 UPDATED IMAGE UPLOAD SECTION */}
             <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Images (Select Multiple)</label>
                 <div className="border border-gray-300 rounded-lg p-2 flex flex-col gap-2 bg-white relative">
                     <input 
                         type="file" 
                         accept="image/*"
-                        multiple  // 👈 ALLOW MULTIPLE
+                        multiple 
                         onChange={handleFileChange}
                         className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer"
                     />
-                     
-                     {/* Preview Area Grid */}
                      {imagePreviews.length > 0 && (
                         <div className="flex gap-2 mt-2 overflow-x-auto pb-2">
                             {imagePreviews.map((src, index) => (
@@ -195,7 +186,6 @@ export default function CreateNewsDashboard() {
             </div>
         </div>
 
-        {/* --- ROW 3: CONTENT --- */}
         <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Content <span className="text-red-500">*</span></label>
             <div className="bg-white rounded-lg">
@@ -203,20 +193,16 @@ export default function CreateNewsDashboard() {
                     theme="snow"
                     value={formData.content}
                     onChange={(val) => setFormData({...formData, content: val})}
-                    className="h-[300px]"
+                    className="h-[300px] text-black"
                 />
             </div>
         </div>
 
-        {/* --- ROW 4: SETTINGS --- */}
         <div className="pt-12 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-             
-             {/* Is Breaking Toggle */}
              <div className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg bg-gray-50">
                 <div className="relative inline-block w-12 h-6 align-middle select-none transition duration-200 ease-in">
                     <input 
                         type="checkbox" 
-                        name="toggle" 
                         id="breaking-toggle" 
                         checked={formData.is_breaking}
                         onChange={(e) => setFormData({...formData, is_breaking: e.target.checked})}
@@ -227,7 +213,6 @@ export default function CreateNewsDashboard() {
                 <label htmlFor="breaking-toggle" className="text-sm font-bold text-gray-700 cursor-pointer">Is Breaking News</label>
              </div>
 
-             {/* Status Select */}
              <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
                 <select 
@@ -241,7 +226,6 @@ export default function CreateNewsDashboard() {
              </div>
         </div>
 
-        {/* --- ACTION BUTTONS --- */}
         <div className="flex items-center gap-4 pt-6 border-t border-gray-100">
             <button 
                 type="submit" 
@@ -258,13 +242,12 @@ export default function CreateNewsDashboard() {
                 Cancel
             </button>
         </div>
-
       </form>
 
-      {/* Toggle CSS */}
       <style jsx>{`
         .toggle-checkbox:checked {
           right: 0;
+          left: auto;
           border-color: #f97316;
         }
         .toggle-checkbox {

@@ -20,9 +20,15 @@ export default function Footer() {
     setMsg('');
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/newsletter', {
+      // ✅ FIX: Dashboard variable use kiya localhost hatakar
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      
+      const res = await fetch(`${baseUrl}/newsletter`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json' // InfinityFree compatibility
+        },
         body: JSON.stringify({ email })
       });
 
@@ -38,26 +44,27 @@ export default function Footer() {
         setMsg(data.message || 'Subscription failed.');
       }
     } catch (error) {
+      console.error("Newsletter Error:", error);
       setStatus('error');
       setMsg('Something went wrong.');
     }
   };
 
-  // 👇 1. COMPANY LINKS (Paths updated to match your folder names)
+  // 1. COMPANY LINKS
   const companyLinks = [
     { name: 'Home', path: '/' },
-    { name: 'About Us', path: '/about' },          // Folder: app/about
-    { name: 'Contact Support', path: '/contact' }, // Folder: app/contact
-    { name: 'Editorial Team', path: '/team' },     // Folder: app/team (Fixes 404 Error)
-    { name: 'Careers', path: '/careers' }          // Folder: app/careers
+    { name: 'About Us', path: '/about' },
+    { name: 'Contact Support', path: '/contact' },
+    { name: 'Editorial Team', path: '/team' },
+    { name: 'Careers', path: '/careers' }
   ];
 
-  // 👇 2. CATEGORIES (Matches Navbar & Database)
+  // 2. CATEGORIES
   const footerCategories = [
     { name: 'India', slug: 'india' },
     { name: 'World', slug: 'world' },
     { name: 'Business', slug: 'business' },
-    { name: 'Tech', slug: 'tech' },       // ✅ Correct slug for DB matching
+    { name: 'Tech', slug: 'tech' },
     { name: 'Sports', slug: 'sports' },
     { name: 'Education', slug: 'education' }
   ];
@@ -65,7 +72,7 @@ export default function Footer() {
   return (
     <footer className="bg-black text-white pt-20 pb-10 border-t-4 border-red-700 mt-20 font-sans relative overflow-hidden">
       
-      {/* --- Background Glow Effects --- */}
+      {/* Background Glow Effects */}
       <div className="absolute top-0 left-1/4 w-64 h-64 bg-red-900 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse"></div>
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-900 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse delay-75"></div>
 
@@ -83,7 +90,6 @@ export default function Footer() {
               Your trusted source for unbiased news, in-depth analysis, and real-time updates. We cover the truth from every angle.
             </p>
             
-            {/* Animated Social Icons */}
             <div className="flex space-x-4">
               {[
                 { icon: 'M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z', color: 'hover:bg-blue-600' }, 
@@ -100,7 +106,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Column 2: Quick Links (Using Correct Paths) */}
+          {/* Column 2: Quick Links */}
           <div>
             <h3 className="text-lg font-bold uppercase tracking-wider mb-6 border-b-2 border-red-700 pb-2 inline-block">Company</h3>
             <ul className="space-y-3 text-sm text-gray-400">
@@ -130,7 +136,7 @@ export default function Footer() {
 
           {/* Column 4: Newsletter */}
           <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-purple-600 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+            <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-purple-600 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-1000"></div>
             
             <div className="relative bg-gray-900 p-6 rounded-lg border border-gray-800 shadow-2xl">
               <h3 className="text-lg font-bold uppercase tracking-wider mb-2 text-white flex items-center gap-2">
@@ -147,33 +153,20 @@ export default function Footer() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="bg-black/50 text-white px-4 py-3 text-sm rounded border border-gray-700 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all duration-300"
+                  className="bg-black/50 text-white px-4 py-3 text-sm rounded border border-gray-700 focus:outline-none focus:border-red-500 transition-all duration-300"
                 />
                 <button 
                   type="submit" 
                   disabled={status === 'loading'}
                   className="bg-gradient-to-r from-red-700 to-red-900 text-white px-4 py-3 text-sm font-bold uppercase tracking-wide rounded hover:from-red-600 hover:to-red-800 transition-all duration-300 transform active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2 shadow-lg"
                 >
-                  {status === 'loading' ? (
-                    <>
-                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        Processing...
-                    </>
-                  ) : 'Sign Me Up'}
+                  {status === 'loading' ? 'Processing...' : 'Sign Me Up'}
                 </button>
               </form>
 
               <div className="h-6 mt-3 overflow-hidden">
-                {status === 'success' && (
-                    <p className="text-green-400 text-xs font-bold text-center animate-bounce">
-                        {msg}
-                    </p>
-                )}
-                {status === 'error' && (
-                    <p className="text-red-400 text-xs font-bold text-center animate-pulse">
-                        {msg}
-                    </p>
-                )}
+                {status === 'success' && <p className="text-green-400 text-xs font-bold text-center animate-bounce">{msg}</p>}
+                {status === 'error' && <p className="text-red-400 text-xs font-bold text-center animate-pulse">{msg}</p>}
               </div>
             </div>
           </div>
@@ -182,7 +175,7 @@ export default function Footer() {
 
         {/* --- BOTTOM SECTION --- */}
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500">
-          <p>© {currentYear} Flash 360 Degree. Designed & Developed by <span className="text-white font-bold cursor-pointer hover:text-red-500 transition">Suresh Kumar Sahu</span>.</p>
+          <p>© {currentYear} Flash 360 Degree. Designed & Developed by <span className="text-white font-bold">Chitresh Kumar Sahu</span>.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((link) => (
                 <Link key={link} href={`/${link.toLowerCase().replace(/ /g, '-')}`} className="hover:text-white transition-colors duration-200">

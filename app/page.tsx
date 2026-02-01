@@ -6,11 +6,10 @@ import BreakingNews from '@/components/BreakingNews';
 import NewsGrid from '@/components/NewsGrid';
 import Footer from '@/components/Footer';
 
-// ✅ FORCE dynamic rendering
+// ✅ Isse Vercel har baar fresh data mangega
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// --- DATA FETCHING ---
 async function getNews() {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -27,7 +26,7 @@ async function getNews() {
       cache: 'no-store',
       signal: controller.signal,
       headers: {
-        Accept: 'application/json',
+        'Accept': 'application/json',
       },
     });
 
@@ -58,12 +57,14 @@ export default async function Home() {
   const heroNews = newsList[0] || null;
   const moreNews = newsList.slice(1);
 
+  // ✅ FIX: Image URL logic ko simple aur direct banaya
   const getImageUrl = (imagePath?: string) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
 
-    const backend = process.env.NEXT_PUBLIC_API_URL;
-    return `${backend?.replace('/api', '')}/storage/${imagePath}`;
+    // InfinityFree ka direct domain use karein images ke liye
+    const backendDomain = "http://flash-360-degree.ct.ws"; 
+    return `${backendDomain}/storage/${imagePath}`;
   };
 
   return (
@@ -81,7 +82,7 @@ export default async function Home() {
       />
 
       <main className="container mx-auto px-4 py-10">
-        {/* HERO */}
+        {/* HERO SECTION */}
         {heroNews && (
           <section className="mb-16 border-b border-gray-200 pb-12">
             <Link
@@ -91,7 +92,7 @@ export default async function Home() {
               <div className="w-full h-[400px] lg:h-[500px] bg-gray-100 overflow-hidden rounded-lg shadow-sm relative">
                 {heroNews.image ? (
                   <img
-                    src={getImageUrl(heroNews.image)}
+                    src={getImageUrl(heroNews.image)!}
                     alt={heroNews.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
                   />
@@ -139,10 +140,10 @@ export default async function Home() {
           </section>
         )}
 
-        {/* GRID */}
+        {/* NEWS GRID SECTION */}
         {moreNews.length > 0 && <NewsGrid news={moreNews} />}
 
-        {/* EMPTY */}
+        {/* EMPTY STATE */}
         {newsList.length === 0 && (
           <div className="text-center py-20 bg-gray-50 rounded border-dashed border-2 border-gray-200">
             <h3 className="text-2xl font-bold text-gray-400">

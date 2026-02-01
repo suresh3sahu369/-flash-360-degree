@@ -12,23 +12,25 @@ export default function NewsGrid({ news }: { news: any[] }) {
     setVisibleCount((prev) => prev + 6); // Button dabane par 6 aur aayengi
   };
 
-  // Image URL Fixer
+  // ✅ FIX: Images ko live backend domain se fetch karega
   const getImageUrl = (imagePath: string) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
-    return `http://127.0.0.1:8000/storage/${imagePath}`;
+
+    // InfinityFree ka live domain images ke liye
+    const backendDomain = "http://flash-360-degree.ct.ws"; 
+    return `${backendDomain}/storage/${imagePath}`;
   };
 
   return (
     <div className="py-8">
-      <h3 className="text-2xl font-bold uppercase border-l-4 border-red-700 pl-4 mb-8">
+      <h3 className="text-2xl font-bold uppercase border-l-4 border-red-700 pl-4 mb-8 text-black">
         Latest Stories
       </h3>
 
       {/* Grid Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {news.slice(0, visibleCount).map((item) => (
-          // 👇 UPDATE: Pura Card ab <Link> ban gaya hai
           <Link 
             key={item.id} 
             href={`/news/${item.slug}`}
@@ -39,7 +41,7 @@ export default function NewsGrid({ news }: { news: any[] }) {
             <div className="h-48 overflow-hidden bg-gray-200 relative">
               {item.image ? (
                 <img 
-                  src={getImageUrl(item.image)} 
+                  src={getImageUrl(item.image)!} 
                   alt={item.title} 
                   className="w-full h-full object-cover group-hover:scale-105 transition duration-500" 
                 />
@@ -53,13 +55,13 @@ export default function NewsGrid({ news }: { news: any[] }) {
 
             {/* Content Section */}
             <div className="p-5 flex flex-col flex-grow">
-              <h4 className="font-bold text-lg leading-snug mb-2 group-hover:text-red-700 line-clamp-2 transition-colors">
+              <h4 className="font-bold text-lg leading-snug mb-2 group-hover:text-red-700 line-clamp-2 transition-colors text-gray-900">
                 {item.title}
               </h4>
-              <p className="text-gray-500 text-sm line-clamp-3 mb-4 flex-grow">
+              <div className="text-gray-500 text-sm line-clamp-3 mb-4 flex-grow">
                  {/* HTML tags hatane ke liye replace use kiya */}
                  {item.content?.replace(/<[^>]+>/g, '')}
-              </p>
+              </div>
               
               {/* Footer: Date & Read More */}
               <div className="text-xs text-gray-400 border-t pt-3 flex justify-between items-center mt-auto">

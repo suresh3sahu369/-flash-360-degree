@@ -11,7 +11,6 @@ export const revalidate = 0;
 
 async function getNews() {
   try {
-    // 1. Backend URL fetch karna
     const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
     if (!baseUrl) {
@@ -20,23 +19,29 @@ async function getNews() {
     }
 
     const controller = new AbortController();
-    setTimeout(() => controller.abort(), 8000);
+    setTimeout(() => controller.abort(), 10000);
 
-    // 2. InfinityFree Challenge Bypass Headers
-    const res = await fetch(`${baseUrl}/news`, {
+    // ✅ InfinityFree bypass karne ke liye Proxy aur Browser-like headers
+    const proxyUrl = 'https://corsproxy.io/?';
+    const targetUrl = encodeURIComponent(`${baseUrl}/news`);
+
+    const res = await fetch(`${proxyUrl}${targetUrl}`, {
       cache: 'no-store',
       signal: controller.signal,
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest', // Laravel API calls ke liye zaroori
+        'X-Requested-With': 'XMLHttpRequest',
+        // InfinityFree ko batana ki ye ek real browser hai
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
       },
     });
 
-    // 3. Response check: JSON hai ya InfinityFree ka HTML error
     const contentType = res.headers.get("content-type");
+    
+    // JSON check taaki HTML error page na load ho
     if (!res.ok || !contentType || !contentType.includes("application/json")) {
-      console.error('Backend Error: Received HTML instead of JSON. Verify InfinityFree link.');
+      console.error('Backend Error: Received HTML instead of JSON. Check Proxy or InfinityFree.');
       return [];
     }
 
@@ -50,7 +55,7 @@ async function getNews() {
 export default async function Home() {
   const apiData = await getNews();
 
-  // News list handle karna
+  // News list extraction
   const newsList =
     apiData?.data && Array.isArray(apiData.data)
       ? apiData.data
@@ -61,12 +66,10 @@ export default async function Home() {
   const heroNews = newsList[0] || null;
   const moreNews = newsList.slice(1);
 
-  // Image URL Helper
   const getImageUrl = (imagePath?: string) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
 
-    // InfinityFree HTTP domain use karein
     const backendDomain = "http://flash-360-degree.ct.ws";
     return `${backendDomain}/storage/${imagePath}`;
   };
@@ -145,7 +148,7 @@ export default async function Home() {
         {newsList.length === 0 && (
           <div className="text-center py-20 bg-gray-50 rounded border-dashed border-2 border-gray-200">
             <h3 className="text-2xl font-bold text-gray-400">No News Found</h3>
-            <p className="text-gray-500 mt-2">Check backend API connection or add news from dashboard.</p>
+            <p className="text-gray-500 mt-2">Check backend API connection or verify InfinityFree security challenge.</p>
           </div>
         )}
       </main>

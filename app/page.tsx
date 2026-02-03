@@ -19,7 +19,7 @@ async function getNews() {
     }
 
     const controller = new AbortController();
-    setTimeout(() => controller.abort(), 12000); // 12 seconds timeout for slow free hosting
+    setTimeout(() => controller.abort(), 30000); // Badha kar 30 second kiya
 
     // ✅ Naya Stable Proxy use kar rahe hain InfinityFree bypass ke liye
     const proxyUrl = 'https://api.allorigins.win/raw?url=';

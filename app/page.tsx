@@ -6,7 +6,6 @@ import BreakingNews from '@/components/BreakingNews';
 import NewsGrid from '@/components/NewsGrid';
 import Footer from '@/components/Footer';
 
-// ✅ Isse Vercel har baar fresh data mangega
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -26,14 +25,13 @@ async function getNews() {
       cache: 'no-store',
       signal: controller.signal,
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
     });
 
-    const contentType = res.headers.get('content-type');
-
-    if (!res.ok || !contentType?.includes('application/json')) {
-      console.error('Backend invalid response:', res.status);
+    // ✅ ONLY status check (InfinityFree kabhi HTML bhej deta hai)
+    if (!res.ok) {
+      console.error('Backend error status:', res.status);
       return [];
     }
 
@@ -57,13 +55,12 @@ export default async function Home() {
   const heroNews = newsList[0] || null;
   const moreNews = newsList.slice(1);
 
-  // ✅ FIX: Image URL logic ko simple aur direct banaya
   const getImageUrl = (imagePath?: string) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
 
-    // InfinityFree ka direct domain use karein images ke liye
-    const backendDomain = "http://flash-360-degree.ct.ws"; 
+    // ✅ HTTPS backend domain
+    const backendDomain = "https://flash-360-degree.ct.ws";
     return `${backendDomain}/storage/${imagePath}`;
   };
 
@@ -140,7 +137,7 @@ export default async function Home() {
           </section>
         )}
 
-        {/* NEWS GRID SECTION */}
+        {/* NEWS GRID */}
         {moreNews.length > 0 && <NewsGrid news={moreNews} />}
 
         {/* EMPTY STATE */}

@@ -11,6 +11,7 @@ export const revalidate = 0;
 
 async function getNews() {
   try {
+    // 1. Backend URL fetch karna
     const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
     if (!baseUrl) {
@@ -21,17 +22,21 @@ async function getNews() {
     const controller = new AbortController();
     setTimeout(() => controller.abort(), 8000);
 
+    // 2. InfinityFree Challenge Bypass Headers
     const res = await fetch(`${baseUrl}/news`, {
       cache: 'no-store',
       signal: controller.signal,
       headers: {
-        Accept: 'application/json',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest', // Laravel API calls ke liye zaroori
       },
     });
 
-    // ✅ ONLY status check (InfinityFree kabhi HTML bhej deta hai)
-    if (!res.ok) {
-      console.error('Backend error status:', res.status);
+    // 3. Response check: JSON hai ya InfinityFree ka HTML error
+    const contentType = res.headers.get("content-type");
+    if (!res.ok || !contentType || !contentType.includes("application/json")) {
+      console.error('Backend Error: Received HTML instead of JSON. Verify InfinityFree link.');
       return [];
     }
 
@@ -45,6 +50,7 @@ async function getNews() {
 export default async function Home() {
   const apiData = await getNews();
 
+  // News list handle karna
   const newsList =
     apiData?.data && Array.isArray(apiData.data)
       ? apiData.data
@@ -55,12 +61,13 @@ export default async function Home() {
   const heroNews = newsList[0] || null;
   const moreNews = newsList.slice(1);
 
+  // Image URL Helper
   const getImageUrl = (imagePath?: string) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
 
-    // ✅ HTTPS backend domain
-    const backendDomain = "https://flash-360-degree.ct.ws";
+    // InfinityFree HTTP domain use karein
+    const backendDomain = "http://flash-360-degree.ct.ws";
     return `${backendDomain}/storage/${imagePath}`;
   };
 
@@ -106,9 +113,7 @@ export default async function Home() {
 
               <div>
                 <div className="flex items-center gap-2 text-gray-500 text-xs uppercase font-bold tracking-widest mb-4">
-                  <span className="text-red-600 group-hover:text-red-800 transition">
-                    Trending Now
-                  </span>
+                  <span className="text-red-600 font-bold uppercase">Trending Now</span>
                   <span>•</span>
                   <span>
                     {heroNews.updated_at
@@ -122,11 +127,7 @@ export default async function Home() {
                 </h2>
 
                 <div className="text-lg text-gray-600 leading-relaxed mb-6 line-clamp-4">
-                  {heroNews.excerpt
-                    ? heroNews.excerpt
-                    : heroNews.content
-                        ?.replace(/<[^>]+>/g, '')
-                        .substring(0, 200) + '...'}
+                  {heroNews.excerpt || 'Read the full story on Flash 360 Degree.'}
                 </div>
 
                 <span className="inline-block border-b-2 border-black pb-1 text-sm font-bold uppercase tracking-wide group-hover:text-red-700 group-hover:border-red-700 transition">
@@ -143,12 +144,8 @@ export default async function Home() {
         {/* EMPTY STATE */}
         {newsList.length === 0 && (
           <div className="text-center py-20 bg-gray-50 rounded border-dashed border-2 border-gray-200">
-            <h3 className="text-2xl font-bold text-gray-400">
-              No News Found
-            </h3>
-            <p className="text-gray-500 mt-2">
-              Check backend API connection or add news from dashboard.
-            </p>
+            <h3 className="text-2xl font-bold text-gray-400">No News Found</h3>
+            <p className="text-gray-500 mt-2">Check backend API connection or add news from dashboard.</p>
           </div>
         )}
       </main>

@@ -19,9 +19,9 @@ async function getNews() {
     }
 
     const controller = new AbortController();
-    setTimeout(() => controller.abort(), 30000); // Badha kar 30 second kiya
+    // 30 seconds timeout slow free servers ke liye
+    setTimeout(() => controller.abort(), 30000); 
 
-    // ✅ Naya Stable Proxy use kar rahe hain InfinityFree bypass ke liye
     const proxyUrl = 'https://api.allorigins.win/raw?url=';
     const targetUrl = encodeURIComponent(`${baseUrl}/news`);
 
@@ -31,20 +31,29 @@ async function getNews() {
       headers: {
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
-        // Real browser ki pehchan
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        // ✅ InfinityFree bypass karne ke liye advanced headers
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer': 'https://flash-360-delta.vercel.app/'
       },
     });
 
     const contentType = res.headers.get("content-type");
     
-    // Check if response is real JSON and not InfinityFree's HTML
+    // Agar InfinityFree abhi bhi HTML security page bhej raha hai
     if (!res.ok || !contentType || !contentType.includes("application/json")) {
-      console.error('Backend Error: Received HTML instead of JSON. InfinityFree is blocking.');
+      console.error('Backend Error: Received HTML challenge page. Unlock required.');
       return [];
     }
 
-    return await res.json();
+    const apiData = await res.json();
+    
+    // API data extraction logic
+    return apiData?.data && Array.isArray(apiData.data)
+      ? apiData.data
+      : Array.isArray(apiData)
+      ? apiData
+      : [];
   } catch (error) {
     console.error('Backend Connection Error:', error);
     return [];
@@ -52,15 +61,7 @@ async function getNews() {
 }
 
 export default async function Home() {
-  const apiData = await getNews();
-
-  // News list handle karna
-  const newsList =
-    apiData?.data && Array.isArray(apiData.data)
-      ? apiData.data
-      : Array.isArray(apiData)
-      ? apiData
-      : [];
+  const newsList = await getNews();
 
   const heroNews = newsList[0] || null;
   const moreNews = newsList.slice(1);
